@@ -20,7 +20,7 @@ namespace NextMap.Extensions
 			//so we have a generic type..
 			int nameEnd = type.Name.IndexOf('`');
 			string name = type.Namespace + "." + type.Name.Substring(0, nameEnd);
-			name = name + "<" +  string.Join(", ", type.GetGenericArguments().Select(x=>x.GetCSharpName())) + ">";
+			name = name + "<" +  string.Join(", ", type.GetGenericArguments().Select(x=>x.GetCSharpName()).ToArray()) + ">";
 			return name;
 		}
 

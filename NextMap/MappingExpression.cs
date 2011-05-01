@@ -7,7 +7,8 @@ using System.Reflection;
 
 namespace NextMap
 {
-	internal class MappingExpression<TSource,TDestination> : IMappingExpression<TSource,TDestination>, IMemberConfigurationExpression<TSource>
+	internal class MappingExpression<TSource,TDestination> : IMappingExpression<TSource,TDestination>,
+		IMemberConfigurationExpression<TSource>
 	{
 		#region private fields
 
@@ -115,7 +116,8 @@ namespace NextMap
 					if (memberExpression.Expression.NodeType != ExpressionType.Parameter &&
 						memberExpression.Expression.NodeType != ExpressionType.Convert)
 					{
-						throw new ArgumentException(string.Format("Expression '{0}' must resolve to top-level member.", lambdaExpression), "lambdaExpression");
+						throw new ArgumentException(string.Format("Expression '{0}' must resolve to top-level member.", 
+							lambdaExpression), "lambdaExpression");
 					}
 
 					MemberInfo member = memberExpression.Member;
