@@ -6,12 +6,22 @@ using NextMap.Extensions;
 
 namespace NextMap.MappingRules
 {
-	class EnumerableRule : IMemberMappingRule
+	class EnumerableRule : IMemberMappingRule, IRelatedConfigRule
 	{
 		public string SourceProperty { get; private set; }
 		public string DestinationProperty { get; private set; }
 		public Type SourceType { get; private set; }
 		public Type DestinationType { get; private set; }
+
+		public Type MapDestinationType
+		{
+			get { return DestinationType.GetGenericArguments()[0]; }
+		}
+
+		public Type MapSourceType
+		{
+			get { return SourceType.GetGenericArguments()[0]; }
+		}
 
 		public EnumerableRule(string sourceProperty, string destinationProperty, Type sourceType, Type destinationType)
 		{
@@ -23,12 +33,11 @@ namespace NextMap.MappingRules
 
 		public string GenerateCode(string destinationObject, string sourceObject)
 		{
-			Type genericSourceType = SourceType.GetGenericArguments()[0];
-			Type genericDestinatinoType = DestinationType.GetGenericArguments()[0];
-
 			return string.Format("{0}.{1} = new {2}({3}.{4}.Select(x=> Mapper.Map<{5},{6}>(x)));", 
-				destinationObject, DestinationProperty, DestinationType.GetCSharpName(), 
-				sourceObject, SourceProperty, genericSourceType.GetCSharpName(), genericDestinatinoType.GetCSharpName());
+				destinationObject, DestinationProperty, DestinationType.GetCSharpName(),
+				sourceObject, SourceProperty, MapSourceType.GetCSharpName(), MapDestinationType.GetCSharpName());
 		}
+
+
 	}
 }

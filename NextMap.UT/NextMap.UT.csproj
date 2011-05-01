@@ -56,6 +56,7 @@
     <Compile Include="TestClasses\ProductDto.cs" />
     <Compile Include="TestClasses\ShoppingCart.cs" />
     <Compile Include="TestClasses\ShoppingCartDto.cs" />
+    <Compile Include="ValidationTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NextMap\NextMap.csproj">

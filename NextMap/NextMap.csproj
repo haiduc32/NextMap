@@ -47,7 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\TypeExtensions.cs" />
-    <Compile Include="IMemberMappingRule.cs" />
+    <Compile Include="MappingRules\IMemberMappingRule.cs" />
     <Compile Include="MapKey.cs" />
     <Compile Include="IMap.cs" />
     <Compile Include="IMappingConfiguration.cs" />
@@ -61,6 +61,7 @@
     <Compile Include="MappingRules\DifferentEnumRule.cs" />
     <Compile Include="MappingRules\EnumerableRule.cs" />
     <Compile Include="MappingRules\FromNullableRule.cs" />
+    <Compile Include="MappingRules\IRelatedConfigRule.cs" />
     <Compile Include="MappingRules\MapClassRule.cs" />
     <Compile Include="MappingRules\SimpleRule.cs" />
     <Compile Include="MemberMap.cs" />

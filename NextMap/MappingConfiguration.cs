@@ -92,35 +92,38 @@ namespace NextMap
 		}
 
 		/// <summary>
-		/// Verifies that the mappings on which the configuration relies are defined.
-		/// </summary>
-		public void VerifyDependencies()
-		{
-			string template = "Not all destination members have been mapped for {0} to {1} configuration." + 
-				" Add ignore rules or add mapping source for the fields: {2}";
-			string members = string.Join(", ", GetUnmatchedDestinationMembers().Select(x => x.Name).ToArray());
-			string text = string.Format(template, sourceType.GetCSharpName(), destinationType.GetCSharpName(), members);
-			throw new MappingException(text);
-		}
-
-		/// <summary>
 		/// Verifies that all destination members havea a mapping definition. Will throw an exception if
 		/// there is any member with no defined mapping behaviour.
 		/// </summary>
 		public void VerifyDestinationDefinitions()
 		{
+			string[] unmappedMembers = GetUnmatchedDestinationMembers().Select(x => x.Name).ToArray();
+			if (unmappedMembers.Count() > 0)
+			{
+				string template = "Not all destination members have been mapped for {0} to {1} configuration." +
+					" Add ignore rules or add mapping source for the fields: {2}";
+				string members = string.Join(", ", unmappedMembers);
+				string text = string.Format(template, sourceType.GetCSharpName(), destinationType.GetCSharpName(), members);
+				throw new MappingException(text);
+			}
+		}
+
+		/// <summary>
+		/// Verifies that the mappings on which the configuration relies are defined.
+		/// </summary>
+		public void VerifyDependencies()
+		{
 			//now this method is tricky since in the future there might be more way relations are 
 			//formed with other configurations and this method will have to be updated accordingly.
-			foreach (MemberMap map in mappingDict.Values.Where(x => x.MappingRule is MapClassRule))
+			foreach (MemberMap map in mappingDict.Values.Where(x => x.MappingRule is IRelatedConfigRule))
 			{
-				MapClassRule rule = (MapClassRule)map.MappingRule;
-				if (!Mapper.IsConfigurationDefined(rule.SourceType, destinationType))
+				IRelatedConfigRule rule = (IRelatedConfigRule)map.MappingRule;
+				if (!Mapper.IsConfigurationDefined(rule.MapSourceType, rule.MapDestinationType))
 				{
-					//TODO: throw an exception
 					throw new MappingException(string.Format("For {0} to {1} configuration mapping to the destination" +
 						"member {2} reolies on having a configuration defined from {3} to {4} that was not found.",
 						sourceType.GetCSharpName(), destinationType.GetCSharpName(), map.MemberName,
-						rule.SourceType.GetCSharpName(), rule.DestinationType.GetCSharpName()));	
+						rule.MapDestinationType.GetCSharpName(), rule.MapDestinationType.GetCSharpName()));	
 				}
 			}
 		}

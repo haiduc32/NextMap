@@ -15,18 +15,29 @@ namespace NextMap.UT
 		//TODO: 2. test exceptions when mapping can't be done
 		//TODO: 3. test mapping from class to struct when source is null
 
+		#region UT setup
+
+		[TestCleanup]
+		public void TestCleanup()
+		{
+			//spring cleaning, huh..
+			Mapper.ClearConfiguraitons();
+		}
+
+		#endregion UT setup
+
 		#region test methods
 
 		/// <summary>
 		/// Test mapping 2 simple classes with only primitive properties and fields.
 		/// </summary>
 		[TestMethod]
-		public void Simple_Mapping_Test()
+		public void Basic_Mapping_Test()
 		{
 			CountryEnum b = CountryEnum.Australia;
 			CountryEnumDto a = (CountryEnumDto)b;
 
-			Mapper.CreateMap<Customer, CustomerDto>(overrideIfExist: true)
+			Mapper.CreateMap<Customer, CustomerDto>()
 				.ForMember(x => x.Years, x => x.MapFrom(y => y.Age))
 				.ForMember(x => x.Surname, x => x.MapFrom(y => y.LastName));
 
@@ -35,14 +46,12 @@ namespace NextMap.UT
 			CustomerDto customerDto = Mapper.Map<Customer, CustomerDto>(customer);
 
 			VerifyCustomerDto(customerDto);
-
-			
 		}
 
 		[TestMethod]
 		public void Ignore_Member_Test()
 		{
-			Mapper.CreateMap<Customer, CustomerDto>(overrideIfExist: true).ForMember(x => x.Name, x => x.Ignore());
+			Mapper.CreateMap<Customer, CustomerDto>().ForMember(x => x.Name, x => x.Ignore());
 
 			Customer customer = GenerateCustomer();
 
@@ -55,7 +64,7 @@ namespace NextMap.UT
 		[ExpectedException(typeof(MappingException))]
 		public void Check_First_Level_Member_Test()
 		{
-			Mapper.CreateMap<Customer, CustomerDto>(overrideIfExist: true).ForMember(x => x.Name.Length, x => x.Ignore());
+			Mapper.CreateMap<Customer, CustomerDto>().ForMember(x => x.Name.Length, x => x.Ignore());
 		}
 
 		#endregion test methods

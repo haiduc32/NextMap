@@ -122,6 +122,17 @@ namespace NextMap
 		}
 
 		/// <summary>
+		/// Removes all defined configurations. Should be used only for Unit Testing purposes.
+		/// </summary>
+		public static void ClearConfiguraitons()
+		{
+			//time to clean up the mess
+			mapDictionary.Clear();
+			configurationsDict.Clear();
+			outstandingConfigurations.Clear();
+		}
+
+		/// <summary>
 		/// Gets the configuration for the specified types. Will return null if none is defined.
 		/// </summary>
 		internal static IMappingConfiguration GetConfiguration(Type sourceType, Type destinationType)
