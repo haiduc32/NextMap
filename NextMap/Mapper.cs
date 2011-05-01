@@ -23,6 +23,11 @@ namespace NextMap
 
 		#region public methods
 
+		/// <summary>
+		/// Creates the mapping configuration from TSource type to TDestination type.
+		/// </summary>
+		/// <param name="overrideIfExist">If a previous configuration was defined for that types it will be overriden by 
+		/// the new mapping configuration. Any special mapping conditions from the previous configuration will be lost.</param>
 		public static IMappingExpression<TSource, TDestination> CreateMap<TSource, TDestination>(bool overrideIfExist = false)
 			where TSource : class
 			where TDestination : class
@@ -38,26 +43,32 @@ namespace NextMap
 			{
 				outstandingConfigurations.Add(mappingConfiguration);
 
-				//add a key in the mapDictionary with null value to support checks for
-				//defined mappings
 				MapKey mapKey = (new MapKey(typeof(TSource), typeof(TDestination)));
 
 				if (!overrideIfExist && mapDictionary.ContainsKey(mapKey))
 				{
-					throw new MappingException("The mapping from " + typeof(TSource).Name + " to " + typeof(TDestination).Name + " has already defined.");
+					throw new MappingException("The mapping from " + typeof(TSource).Name + " to " 
+						+ typeof(TDestination).Name + " has already defined.");
 				}
+
+				//add a key in the mapDictionary with null value to support checks for
+				//defined mappings
 				mapDictionary[mapKey] = null;
 			}
 
 			return new MappingExpression<TSource,TDestination>(mappingConfiguration);
 		}
 
+		/// <summary>
+		/// Creates a new instance of TDestination mapping all fields from the source object based on a previously
+		/// defined mapping configuration.
+		/// </summary>
 		public static TDestination Map<TSource, TDestination>(TSource source)
 		{
-			//TODO: fist must check the list of outstanding mapping configurations for compiling
 			//TODO: optimize, try to bypass the lock when possible
 			lock (lockObject)
 			{
+				//fist must check the list of outstanding mapping configurations for compiling
 				if (outstandingConfigurations.Count > 0)
 				{
 					CompileOutstandingConfigurations();
@@ -76,11 +87,17 @@ namespace NextMap
 			return (TDestination)mappedObject;
 		}
 
+		/// <summary>
+		/// Checks if a configuration has been defined.
+		/// </summary>
 		public static bool IsConfigurationDefined<TSource, TDestination>()
 		{
 			return IsConfigurationDefined(typeof(TSource), typeof(TDestination));
 		}
 
+		/// <summary>
+		/// Checks if a configuration has been defined.
+		/// </summary>
 		public static bool IsConfigurationDefined(Type sourceType, Type destinationType)
 		{
 			MapKey key = new MapKey(sourceType, destinationType);

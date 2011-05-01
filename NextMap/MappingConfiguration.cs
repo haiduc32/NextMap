@@ -65,22 +65,10 @@ namespace NextMap
 			MemberMap memberMap;
 			if (!TryConfigureMemberMapping(sourceInfo, fieldInfoDict[memberName], out memberMap))
 			{
-				throw new MappingException("Incompatible types are mapped.");
+				throw new MappingException(string.Format("No mapping could be defined for member {0} from {1} to {2}.", 
+					memberName, GetMemberType(fieldInfoDict[memberName]).GetCSharpName(), 
+					GetMemberType(sourceInfo).GetCSharpName()));
 			}
-
-			////TODO: support complex types thru allready created mapping configurations
-			//if (GetMemberType(fieldInfoDict[memberName]) != GetMemberType(sourceInfo))
-			//{
-			//    //TODO: set a more specific message
-			//    throw new MappingException("Incompatible types are mapped.");
-			//}
-
-			//MemberMap memberMap = new MemberMap
-			//{
-			//    MemberName = memberName,
-			//    SourceMemberName = sourceName,
-			//    Ignore = false
-			//};
 
 			mappingDict[memberMap.MemberName] = memberMap;
 		}
@@ -125,20 +113,8 @@ namespace NextMap
 		/// </summary>
 		private void MapByConvention()
 		{
-			//TODO: map fields by name if there is a Map configuration defined.
-
-			
-			
-			//if (destinationMembers[0].MemberType == MemberTypes.Property)
-			//{
-			//    PropertyInfo propertyInfo = (destinationMembers[0] as PropertyInfo);
-			//    Type[] genericTypes = propertyInfo.PropertyType.GetGenericArguments();
-			//}
-
 			MemberInfo[] destinationMembers = GetMembers(destinationType);
 			MemberInfo[] sourceMembers = GetMembers(sourceType);
-
-
 
 			IEnumerable<MemberInfo> matchedProperties = sourceMembers
 				.Where(x => destinationMembers.Any(y => x.Name == y.Name));
@@ -154,25 +130,13 @@ namespace NextMap
 					MemberMap memberMap;
 					if (!TryConfigureMemberMapping(sourceMember, destinationMember, out memberMap))
 					{
-						//TODO: throw exception with explicit message about type, property name andd reason
+						throw new MappingException(string.Format("No mapping could be defined for member {0} from {1} to {2}.",
+							destinationMember, destinationType.GetCSharpName(), sourceType.GetCSharpName()));
 					}
 
 					mappingDict[memberMap.MemberName] = memberMap;
 				}
 			}
-
-			//foreach (MemberInfo matchedProperty in matchedProperties)
-			//{
-			//    MemberMap memberMap = new MemberMap
-			//    {
-			//        MemberName = matchedProperty.Name,
-			//        SourceMemberName = matchedProperty.Name
-			//    };
-
-			//    mappingDict[memberMap.MemberName] = memberMap;
-			//}
-
-
 		}
 
 		private bool TryConfigureMemberMapping(MemberInfo sourceMember, 
@@ -265,7 +229,7 @@ namespace NextMap
 				else if (destinationType.GetInterfaces().Contains(typeof(System.Collections.IEnumerable)) &&
 					sourceType.GetInterfaces().Contains(typeof(System.Collections.IEnumerable)))
 				{
-					//TODO: if types are not generic we can't map them, so throw an InvalidOperationException
+					//if types are not generic we can't map them, so throw an InvalidOperationException
 					if (!destinationType.IsGenericType || !sourceType.IsGenericType)
 					{
 						throw new InvalidOperationException("Can't map classes derived from IEnumerable that are not generic.");
@@ -287,7 +251,6 @@ namespace NextMap
 					memberMap.MappingRule = new MapClassRule(sourceMember.Name, destinationMember.Name,
 						sourceType, destinationType);
 				}
-				//throw new NotImplementedException("Mapping classes and structures with defined mappings is not supported yet.");
 			}
 
 			//if a mapping could be defined return true
@@ -308,6 +271,9 @@ namespace NextMap
 			return fieldInfoDict.Where(x => !mappingDict.ContainsKey(x.Key)).Select(x => x.Value);
 		}
 
+		/// <summary>
+		/// Gets an array of properties and public fields from the targetType.
+		/// </summary>
 		private static MemberInfo[] GetMembers(Type targetType)
 		{
 			MemberInfo[] foundMembers = targetType
@@ -317,17 +283,9 @@ namespace NextMap
 			return foundMembers;
 		}
 
-		private bool MembersCanBeMappedByConvention(MemberInfo firstMember, MemberInfo secondMember)
-		{
-			string firstName = firstMember.Name;
-			string secondName = secondMember.Name;
-
-			Type firstType = GetMemberType(firstMember);
-			Type secondType = GetMemberType(secondMember);
-
-			return firstName == secondName && firstType == secondType;
-		}
-
+		/// <summary>
+		/// Gets the type of the member.
+		/// </summary>
 		private Type GetMemberType(MemberInfo member)
 		{
 			if (member.MemberType == MemberTypes.Property)

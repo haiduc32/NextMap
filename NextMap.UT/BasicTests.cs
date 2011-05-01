@@ -12,6 +12,8 @@ namespace NextMap.UT
 	public class BasicTests
 	{
 		//TODO: 1. test mapping simple structures like DateTime
+		//TODO: 2. test exceptions when mapping can't be done
+		//TODO: 3. test mapping from class to struct when source is null
 
 		#region test methods
 
