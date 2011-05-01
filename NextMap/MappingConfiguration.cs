@@ -25,7 +25,7 @@ namespace NextMap
 
 		#endregion private fields
 
-		#region properties
+		#region public properties
 
 		public Type SourceType
 		{
@@ -42,7 +42,7 @@ namespace NextMap
 			get { return mappingDict; }
 		}
 
-		#endregion properties
+		#endregion public properties
 
 		#region .ctor
 
@@ -89,6 +89,40 @@ namespace NextMap
 			fieldInfoDict.Clear();
 
 			MapByConvention();
+		}
+
+		/// <summary>
+		/// Verifies that the mappings on which the configuration relies are defined.
+		/// </summary>
+		public void VerifyDependencies()
+		{
+			string template = "Not all destination members have been mapped for {0} to {1} configuration." + 
+				" Add ignore rules or add mapping source for the fields: {2}";
+			string members = string.Join(", ", GetUnmatchedDestinationMembers().Select(x => x.Name).ToArray());
+			string text = string.Format(template, sourceType.GetCSharpName(), destinationType.GetCSharpName(), members);
+			throw new MappingException(text);
+		}
+
+		/// <summary>
+		/// Verifies that all destination members havea a mapping definition. Will throw an exception if
+		/// there is any member with no defined mapping behaviour.
+		/// </summary>
+		public void VerifyDestinationDefinitions()
+		{
+			//now this method is tricky since in the future there might be more way relations are 
+			//formed with other configurations and this method will have to be updated accordingly.
+			foreach (MemberMap map in mappingDict.Values.Where(x => x.MappingRule is MapClassRule))
+			{
+				MapClassRule rule = (MapClassRule)map.MappingRule;
+				if (!Mapper.IsConfigurationDefined(rule.SourceType, destinationType))
+				{
+					//TODO: throw an exception
+					throw new MappingException(string.Format("For {0} to {1} configuration mapping to the destination" +
+						"member {2} reolies on having a configuration defined from {3} to {4} that was not found.",
+						sourceType.GetCSharpName(), destinationType.GetCSharpName(), map.MemberName,
+						rule.SourceType.GetCSharpName(), rule.DestinationType.GetCSharpName()));	
+				}
+			}
 		}
 
 		#endregion public methods

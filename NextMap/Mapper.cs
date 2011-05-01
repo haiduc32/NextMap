@@ -15,8 +15,11 @@ namespace NextMap
 
 		private static Dictionary<MapKey, IMap> mapDictionary = new Dictionary<MapKey, IMap>();
 
-		private static List<IMappingConfiguration> outstandingConfigurations = new List<IMappingConfiguration>();
+		private static Dictionary<MapKey, IMappingConfiguration> configurationsDict =
+			new Dictionary<MapKey, IMappingConfiguration>();
 
+		private static List<IMappingConfiguration> outstandingConfigurations = new List<IMappingConfiguration>();
+		
 		private static object lockObject = new object();
 
 		#endregion private methods
@@ -54,6 +57,7 @@ namespace NextMap
 				//add a key in the mapDictionary with null value to support checks for
 				//defined mappings
 				mapDictionary[mapKey] = null;
+				configurationsDict[mapKey] = mappingConfiguration;
 			}
 
 			return new MappingExpression<TSource,TDestination>(mappingConfiguration);
@@ -79,12 +83,25 @@ namespace NextMap
 
 			if (!mapDictionary.TryGetValue(new MapKey(typeof(TSource), typeof(TDestination)), out mapper))
 			{
-				throw new InvalidOperationException(string.Format("A mapping has not been defined from {0} type to {1} type.", 
+				throw new MappingException(string.Format("A mapping configuration has not been defined from {0} to {1}.", 
 					typeof(TSource).GetCSharpName(), typeof(TDestination).GetCSharpName()));
 			}
 
 			object mappedObject = mapper.Map(source);
 			return (TDestination)mappedObject;
+		}
+
+		/// <summary>
+		/// Verifies all defined configurations to be valid and that all members in destination 
+		/// types have mapping rules defined.
+		/// </summary>
+		public static void AssertConfigurationIsValid()
+		{
+			foreach (IMappingConfiguration configuration in configurationsDict.Values)
+			{
+				configuration.VerifyDependencies();
+				configuration.VerifyDestinationDefinitions();
+			}
 		}
 
 		/// <summary>
@@ -102,6 +119,17 @@ namespace NextMap
 		{
 			MapKey key = new MapKey(sourceType, destinationType);
 			return mapDictionary.ContainsKey(key);
+		}
+
+		/// <summary>
+		/// Gets the configuration for the specified types. Will return null if none is defined.
+		/// </summary>
+		internal static IMappingConfiguration GetConfiguration(Type sourceType, Type destinationType)
+		{
+			MapKey key = new MapKey(sourceType, destinationType);
+			IMappingConfiguration configuration;
+			configurationsDict.TryGetValue(key, out configuration);
+			return configuration;
 		}
 
 		#endregion public methods
