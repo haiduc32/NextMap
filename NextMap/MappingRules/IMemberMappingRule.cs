@@ -7,6 +7,12 @@ namespace NextMap.MappingRules
 {
 	interface IMemberMappingRule
 	{
-		string GenerateCode(string destinationObject, string sourceObject);
+		/// <summary>
+		/// Generates code for the rule. Can be also used inline in other rules.
+		/// </summary>
+		/// <param name="sourceVar">The name of the source variable.</param>
+		/// <param name="destinationVar">The name of the destination variable.</param>
+		/// <returns>The code to be used inline.</returns>
+		string GenerateInlineCode(string sourceVar, string destinationVar);
 	}
 }

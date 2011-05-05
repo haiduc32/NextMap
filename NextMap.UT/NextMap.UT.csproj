@@ -48,6 +48,8 @@
     <Compile Include="ComplexMappingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BasicTests.cs" />
+    <Compile Include="TestClasses\ClassWithArray.cs" />
+    <Compile Include="TestClasses\ClassWithArrayDto.cs" />
     <Compile Include="TestClasses\CountryEnum.cs" />
     <Compile Include="TestClasses\CountryEnumDto.cs" />
     <Compile Include="TestClasses\Customer.cs" />

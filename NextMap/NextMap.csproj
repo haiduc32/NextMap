@@ -58,14 +58,16 @@
     <Compile Include="MappingConfiguration.cs" />
     <Compile Include="MappingException.cs" />
     <Compile Include="MappingExpression.cs" />
-    <Compile Include="MappingRules\DifferentEnumRule.cs" />
+    <Compile Include="MappingRules\CastRule.cs" />
     <Compile Include="MappingRules\EnumerableRule.cs" />
     <Compile Include="MappingRules\FromNullableRule.cs" />
     <Compile Include="MappingRules\IRelatedConfigRule.cs" />
     <Compile Include="MappingRules\MapClassRule.cs" />
+    <Compile Include="MappingRules\RuleProvider.cs" />
     <Compile Include="MappingRules\SimpleRule.cs" />
     <Compile Include="MemberMap.cs" />
     <Compile Include="MemberMapType.cs" />
+    <Compile Include="NameGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

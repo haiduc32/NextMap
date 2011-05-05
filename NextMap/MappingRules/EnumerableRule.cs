@@ -6,10 +6,11 @@ using NextMap.Extensions;
 
 namespace NextMap.MappingRules
 {
-	class EnumerableRule : IMemberMappingRule, IRelatedConfigRule
+	//TODO: when generating code some collection types might require referencing a different assembly or usings
+	internal class EnumerableRule : IMemberMappingRule, IRelatedConfigRule
 	{
-		public string SourceProperty { get; private set; }
-		public string DestinationProperty { get; private set; }
+		private IMemberMappingRule innerRule;
+
 		public Type SourceType { get; private set; }
 		public Type DestinationType { get; private set; }
 
@@ -23,21 +24,72 @@ namespace NextMap.MappingRules
 			get { return SourceType.GetGenericArguments()[0]; }
 		}
 
-		public EnumerableRule(string sourceProperty, string destinationProperty, Type sourceType, Type destinationType)
+		#region .ctor
+
+		protected EnumerableRule(Type sourceType, Type destinationType, IMemberMappingRule innerRule)
 		{
-			SourceProperty = sourceProperty;
-			DestinationProperty = destinationProperty;
 			SourceType = sourceType;
 			DestinationType = destinationType;
+			this.innerRule = innerRule;
 		}
 
-		public string GenerateCode(string destinationObject, string sourceObject)
+		#endregion .ctor
+
+		public string GenerateInlineCode(string sourceVar, string destinationVar)
 		{
-			return string.Format("{0}.{1} = new {2}({3}.{4}.Select(x=> Mapper.Map<{5},{6}>(x)));", 
-				destinationObject, DestinationProperty, DestinationType.GetCSharpName(),
-				sourceObject, SourceProperty, MapSourceType.GetCSharpName(), MapDestinationType.GetCSharpName());
+			string genericDestinationTypeName = MapDestinationType.GetCSharpName();
+			string genericSourceTypeName = MapSourceType.GetCSharpName();
+			string destinationTypename = DestinationType.GetCSharpName();
+
+			string intermediaryVarName = NameGenerator.GenerateInlineVarName();
+			string iteratorName = NameGenerator.GenerateInlineVarName();
+			string inlineVarName = NameGenerator.GenerateInlineVarName();
+
+
+			//TODO: for lists there is no need for intermediary list, optimize in the future
+			string code = "System.Collections.Generic.List<" + genericDestinationTypeName + "> " + intermediaryVarName + " = new System.Collections.Generic.List<" + genericDestinationTypeName + ">();\r\n" +
+				"foreach (" + genericSourceTypeName + " " + iteratorName + " in " + sourceVar + ")\r\n" +
+				"{\r\n" +
+				"\t" + genericDestinationTypeName + " " + inlineVarName + ";\r\n" +
+				//here the inner rule should be called
+				innerRule.GenerateInlineCode(iteratorName, inlineVarName) +
+				//d"\t" + inlineVarName + " = Mapper.Map<" + genericSourceTypeName + "," + genericDestinationTypeName + ">(" + iteratorName + ");\r\n" +
+				//here the inner rule stops
+				"\t" + intermediaryVarName + ".Add(" + inlineVarName + ");\r\n" +
+				"}\r\n" +
+				destinationVar + " = new " + destinationTypename + "(" + intermediaryVarName + ");\r\n";
+
+			return code;
 		}
 
+		public static bool TryApplyRule(Type sourceType, Type destinationType, out IMemberMappingRule rule)
+		{
+			rule = null;
+			//check that it is a class and not an array as arrays should be handled by other rule
+			if (!destinationType.IsClass || destinationType.IsArray || !sourceType.IsClass || sourceType.IsArray)
+				return false;
 
+			//it source and the destinations must implement IEnumerable
+			if (!destinationType.GetInterfaces().Contains(typeof(System.Collections.IEnumerable)) ||
+				!sourceType.GetInterfaces().Contains(typeof(System.Collections.IEnumerable)))
+				return false;
+			
+			//and must have one generic type parameter (that will exclude dictionaries and othe special 
+			//IEnumerable implementations)
+			if (destinationType.GetGenericArguments().Count() != 1 || sourceType.GetGenericArguments().Count() != 1)
+				return false;
+
+			Type genericSourceType = sourceType.GetGenericArguments().Single();
+			Type genericDestinationType = destinationType.GetGenericArguments().Single();
+
+			IMemberMappingRule innerRule;
+			bool canMapGenerics = RuleProvider.GetApplicableRule(genericSourceType, genericDestinationType, out innerRule);
+			if (canMapGenerics)
+			{
+				rule = new EnumerableRule(sourceType, destinationType, innerRule);
+			}
+
+			return canMapGenerics;
+		}
 	}
 }

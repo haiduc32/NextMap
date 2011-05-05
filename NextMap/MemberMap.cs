@@ -9,7 +9,7 @@ namespace NextMap
 	internal class MemberMap
 	{
 
-		public string MemberName { get; set; }
+		public string DestinationMemberName { get; set; }
 
 		public string SourceMemberName { get; set; }
 
@@ -18,5 +18,11 @@ namespace NextMap
 		public MemberMapType MapType { get; set; }
 
 		public IMemberMappingRule MappingRule { get; set; }
+
+		internal string GenerateCode(string sourceObject, string destinationObject)
+		{
+			return MappingRule.GenerateInlineCode(sourceObject + "." + SourceMemberName,
+				destinationObject + "." + DestinationMemberName);
+		}
 	}
 }

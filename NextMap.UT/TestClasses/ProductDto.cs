@@ -9,5 +9,7 @@ namespace NextMap.UT.TestClasses
 	{
 		public string Name { get; set; }
 		public decimal Price { get; set; }
+
+		public List<string> Feedback { get; set; }
 	}
 }

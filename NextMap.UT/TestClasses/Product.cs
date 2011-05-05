@@ -16,5 +16,7 @@ namespace NextMap.UT.TestClasses
 		public double Price { get; set; }
 
 		public string SecretCode { set; private get; }
+
+		public List<string> Feedback { get; set; }
 	}
 }

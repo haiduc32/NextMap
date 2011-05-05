@@ -6,30 +6,38 @@ using NextMap.Extensions;
 
 namespace NextMap.MappingRules
 {
-	class MapClassRule : IMemberMappingRule, IRelatedConfigRule
+	/// <summary>
+	/// Map class rule will try to map the source type to destination type using a defined mapping. Will throw
+	/// an exception at runtime when mapping if the mapping was not defined. In a rule chain check should be used
+	/// as the last resort.
+	/// </summary>
+	class MapClassRule : IMemberMappingRule
 	{
-		public string SourceProperty { get; private set; }
-		public string DestinationProperty { get; private set; }
 		public Type SourceType { get; private set; }
 		public Type DestinationType { get; private set; }
 
-		public Type MapDestinationType { get { return DestinationType; } }
-		public Type MapSourceType { get { return SourceType; } }
-
-		public MapClassRule(string sourceProperty, string destinationProperty, Type sourceType, Type destinationType)
+		public MapClassRule(Type sourceType, Type destinationType)
 		{
-			SourceProperty = sourceProperty;
-			DestinationProperty = destinationProperty;
 			SourceType = sourceType;
 			DestinationType = destinationType;
 		}
 
-		public string GenerateCode(string destinationObject, string sourceObject)
+		public string GenerateInlineCode(string sourceVar, string destinationvar)
 		{
-			return string.Format("{0}.{1} = Mapper.Map<{2}, {3}>({4}.{5});", destinationObject, DestinationProperty,
-				SourceType.GetCSharpName(), DestinationType.GetCSharpName(), sourceObject, SourceProperty);
+			return destinationvar + " = Mapper.Map<" + SourceType.GetCSharpName() + ", " + DestinationType.GetCSharpName() + ">(" + sourceVar + ");\r\n";
 		}
 
+		public static bool TryApplyRule(Type sourceType, Type destinationType, out IMemberMappingRule mappingRule)
+		{
+			mappingRule = null;
+			if ((destinationType.IsClass || destinationType.IsValueType) && 
+				(sourceType.IsClass || sourceType.IsValueType))
+			{
+				mappingRule = new MapClassRule(sourceType, destinationType);
+				return true;
+			}
 
+			return false;
+		}
 	}
 }

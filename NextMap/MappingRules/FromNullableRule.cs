@@ -7,21 +7,39 @@ namespace NextMap.MappingRules
 {
 	internal class FromNullableRule : IMemberMappingRule
 	{
-		public string SourceProperty { get; private set; }
-		public string DestinationProperty { get; private set; }
 		public Type SourceType { get; private set; }
 
-		public FromNullableRule(string sourceProperty, string destinationProperty, Type sourceType)
+		public FromNullableRule(Type sourceType)
 		{
-			SourceProperty = sourceProperty;
-			DestinationProperty = destinationProperty;
 			SourceType = sourceType;
 		}
 
-		public string GenerateCode(string destinationObject, string sourceObject)
+		public string GenerateInlineCode(string sourceVar, string destinationVar)
 		{
-			return string.Format("{0}.{1} = {2}.{3} ?? default({4});", destinationObject, DestinationProperty,
-				sourceObject, SourceProperty, SourceType.GetGenericArguments()[0].Name);
+			return destinationVar + " = " + sourceVar + " ?? default(" + SourceType.GetGenericArguments()[0].Name + ");\r\n";
+		}
+
+		public static bool TryApplyRule(Type sourceType, Type destinationType, out IMemberMappingRule mappingRule)
+		{
+			mappingRule = null;
+
+			//for primitive types
+			if (destinationType.IsPrimitive && sourceType.IsGenericType &&
+				destinationType.IsAssignableFrom(sourceType.GetGenericArguments()[0]))
+			{
+				mappingRule = new FromNullableRule(sourceType);
+				return true;
+			}
+
+			//for value types
+			if (destinationType.IsValueType && sourceType.IsGenericType &&
+				destinationType.IsAssignableFrom(sourceType.GetGenericArguments()[0]))
+			{
+				mappingRule = new FromNullableRule(sourceType);
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

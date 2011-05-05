@@ -57,6 +57,10 @@ using NextMap;
 
 			// *** Now compile the whole thing
 			CompilerResults loCompiled = loCompiler.CompileAssemblyFromSource(loParameters, code);
+			foreach (CompilerError compilerError in loCompiled.Errors)
+			{
+				string a = compilerError.ErrorText;
+			}
 
 			Assembly loAssembly = loCompiled.CompiledAssembly;
 
@@ -102,7 +106,7 @@ using NextMap;
 
 				if (memberMap == null || memberMap.Ignore) continue;
 
-				mappingLines += memberMap.MappingRule.GenerateCode("targetObject", "sourceObject") + "\r\n";
+				mappingLines += memberMap.GenerateCode("sourceObject", "targetObject") + "\r\n";
 				// string.Format(FIELD_MAP, memberMap.MemberName, memberMap.SourceMemberName);
 			}
 
@@ -121,6 +125,7 @@ using NextMap;
 	{
 		public object Map(object source)
 		{
+			if (source == null) return null;
 			" + sourceCast + @"
 			" + targetCreate + @"
 			" + mappingLines + @"

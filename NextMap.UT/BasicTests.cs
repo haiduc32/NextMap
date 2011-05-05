@@ -67,6 +67,18 @@ namespace NextMap.UT
 			Mapper.CreateMap<Customer, CustomerDto>().ForMember(x => x.Name.Length, x => x.Ignore());
 		}
 
+		[TestMethod]
+		public void Null_Mapping_Test()
+		{
+			Mapper.CreateMap<Customer, CustomerDto>();
+
+			Customer customer = null;
+
+			CustomerDto customerDto = Mapper.Map<Customer, CustomerDto>(customer);
+
+			Assert.IsNull(customerDto);
+		}
+
 		#endregion test methods
 
 		#region helper methods

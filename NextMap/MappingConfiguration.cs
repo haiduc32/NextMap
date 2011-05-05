@@ -70,18 +70,18 @@ namespace NextMap
 					GetMemberType(sourceInfo).GetCSharpName()));
 			}
 
-			mappingDict[memberMap.MemberName] = memberMap;
+			mappingDict[memberMap.DestinationMemberName] = memberMap;
 		}
 
 		public void Ignore(string memberName)
 		{
 			MemberMap memberMap = new MemberMap
 			{
-				MemberName = memberName,
+				DestinationMemberName = memberName,
 				Ignore = true
 			};
 
-			mappingDict[memberMap.MemberName] = memberMap;
+			mappingDict[memberMap.DestinationMemberName] = memberMap;
 		}
 
 		public void ResetConfiguration()
@@ -122,7 +122,7 @@ namespace NextMap
 				{
 					throw new MappingException(string.Format("For {0} to {1} configuration mapping to the destination" +
 						"member {2} reolies on having a configuration defined from {3} to {4} that was not found.",
-						sourceType.GetCSharpName(), destinationType.GetCSharpName(), map.MemberName,
+						sourceType.GetCSharpName(), destinationType.GetCSharpName(), map.DestinationMemberName,
 						rule.MapDestinationType.GetCSharpName(), rule.MapDestinationType.GetCSharpName()));	
 				}
 			}
@@ -153,6 +153,8 @@ namespace NextMap
 			MemberInfo[] destinationMembers = GetMembers(destinationType);
 			MemberInfo[] sourceMembers = GetMembers(sourceType);
 
+			//TODO: after case sensitive matching has been done, and there are unmatched destination members
+			//do a non sensitive comparison
 			IEnumerable<MemberInfo> matchedProperties = sourceMembers
 				.Where(x => destinationMembers.Any(y => x.Name == y.Name));
 			foreach (MemberInfo sourceMember in sourceMembers)
@@ -171,7 +173,7 @@ namespace NextMap
 							destinationMember, destinationType.GetCSharpName(), sourceType.GetCSharpName()));
 					}
 
-					mappingDict[memberMap.MemberName] = memberMap;
+					mappingDict[memberMap.DestinationMemberName] = memberMap;
 				}
 			}
 		}
@@ -182,122 +184,25 @@ namespace NextMap
 			memberMap = new MemberMap
 			{
 				Ignore = false,
-				MemberName = destinationMember.Name,
+				DestinationMemberName = destinationMember.Name,
 				SourceMemberName = sourceMember.Name
 			};
 
 			Type sourceType = GetMemberType(sourceMember);
 			Type destinationType = GetMemberType(destinationMember);
 
-			//first check for primitive type
-			#region primitives
-			if (destinationType.GetNullableType().IsPrimitive)
-			{
-				//first check if the types are assignable
-				//if you update the rules here consider updating them for assignable value types
-				if (destinationType.IsAssignableFrom(sourceType))
-				{
-					memberMap.MappingRule = new SimpleRule(sourceMember.Name, destinationMember.Name);
-				}
-				else if (destinationType.IsPrimitive && sourceType.IsGenericType &&
-					destinationType.IsAssignableFrom(sourceType.GetGenericArguments()[0]))
-				{
-					memberMap.MappingRule = new FromNullableRule(sourceMember.Name, destinationMember.Name,
-						sourceType);
-				}
-			}
-			#endregion Primitives
-			//mapping to decimal requires special handling, mapping from decimal is not supported at this moment
-			#region mapping to decimal
-			else if (destinationType.Equals(typeof(decimal)))
-			{
-				if (sourceType.IsPrimitive)
-				{
-					memberMap.MappingRule = new CastRule(sourceMember.Name, destinationMember.Name, destinationType);
-				}
-			}
-			#endregion mapping to decimal
-			//mapping for String members
-			#region String
-			else if (destinationType.Equals(typeof(string)) && sourceType.Equals(typeof(string)))
-			{
-				memberMap.MappingRule = new SimpleRule(sourceMember.Name, destinationMember.Name);
-			}
-			#endregion String
-			//mapping enums
-			#region Enums
-			else if (destinationType.IsEnum && sourceType.IsEnum)
-			{
-				//if enum types are same apply the simple rule
-				if (destinationType.Equals(sourceType))
-				{
-					memberMap.MappingRule = new SimpleRule(sourceMember.Name, destinationMember.Name);
-				}
-				else
-				{
-					memberMap.MappingRule = new CastRule(sourceMember.Name, destinationMember.Name, destinationType);
-				}
-			}
-			#endregion Enums
-			//assignable value types
-			#region assignable value types
-			else if (destinationType.GetNullableType().IsValueType && sourceType.GetNullableType().IsValueType &&
-				destinationType.GetNullableType().IsAssignableFrom(sourceType.GetNullableType()))
-			{
-				if (destinationType.IsAssignableFrom(sourceType))
-				{
-					memberMap.MappingRule = new SimpleRule(sourceMember.Name, destinationMember.Name);
-				}
-
-				else if (destinationType.IsValueType && sourceType.IsGenericType &&
-					destinationType.IsAssignableFrom(sourceType.GetGenericArguments()[0]))
-				{
-					memberMap.MappingRule = new FromNullableRule(sourceMember.Name, destinationMember.Name,
-						sourceType);
-				}
-			}
-			#endregion same value tyeps
-			else if ((destinationType.IsClass || destinationType.IsValueType) && (sourceType.IsClass || sourceType.IsValueType))
-			{
-				if (destinationType.Equals(sourceType))
-				{
-					memberMap.MappingRule = new SimpleRule(sourceMember.Name, destinationMember.Name);
-				}
-				else if (destinationType.GetInterfaces().Contains(typeof(System.Collections.IEnumerable)) &&
-					sourceType.GetInterfaces().Contains(typeof(System.Collections.IEnumerable)))
-				{
-					//if types are not generic we can't map them, so throw an InvalidOperationException
-					if (!destinationType.IsGenericType || !sourceType.IsGenericType)
-					{
-						throw new InvalidOperationException("Can't map classes derived from IEnumerable that are not generic.");
-					}
-
-					if (destinationType.GetInterfaces().Contains(typeof(System.Collections.IDictionary)))
-					{
-						throw new NotImplementedException("Dictionary is not supported yet.");
-					}
-					else
-					{
-						memberMap.MappingRule = new EnumerableRule(sourceMember.Name, destinationMember.Name,
-							sourceType, destinationType);
-					}
-				}
-				else
-				{
-					//will setup the Map<> for this types, but unfortunately we can't check them at this point
-					memberMap.MappingRule = new MapClassRule(sourceMember.Name, destinationMember.Name,
-						sourceType, destinationType);
-				}
-			}
+			IMemberMappingRule mappingRule;
 
 			//if a mapping could be defined return true
-			if (memberMap.MappingRule != null)
+			if (RuleProvider.GetApplicableRule(sourceType, destinationType, out mappingRule))
 			{
+				memberMap.MappingRule = mappingRule;
 				return true;
 			}
 			else
 			{
 				//if could not setup the mapping ignore the member and return false
+				//TODO: throw exception? wait till case insensitive mapping has been tried and then throw?
 				memberMap.Ignore = true;
 				return false;
 			}
