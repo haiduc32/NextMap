@@ -33,5 +33,10 @@ namespace NextMap.MappingRules
 
 			return false;
 		}
+
+		public Dictionary<Type, Type> GetDependantMappings()
+		{
+			return new Dictionary<Type, Type>();
+		}
 	}
 }

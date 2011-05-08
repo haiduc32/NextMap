@@ -34,6 +34,11 @@ namespace NextMap.MappingRules
 			return false;
 		}
 
+		public Dictionary<Type, Type> GetDependantMappings()
+		{
+			return new Dictionary<Type, Type>();
+		}
+
 		private static bool IsAssignableFrom(Type sourceType, Type destinationType)
 		{
 			long i = 10;

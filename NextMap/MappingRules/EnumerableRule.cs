@@ -7,7 +7,7 @@ using NextMap.Extensions;
 namespace NextMap.MappingRules
 {
 	//TODO: when generating code some collection types might require referencing a different assembly or usings
-	internal class EnumerableRule : IMemberMappingRule, IRelatedConfigRule
+	internal class EnumerableRule : IMemberMappingRule
 	{
 		private IMemberMappingRule innerRule;
 
@@ -51,10 +51,9 @@ namespace NextMap.MappingRules
 				"foreach (" + genericSourceTypeName + " " + iteratorName + " in " + sourceVar + ")\r\n" +
 				"{\r\n" +
 				"\t" + genericDestinationTypeName + " " + inlineVarName + ";\r\n" +
-				//here the inner rule should be called
+				//here the inner rule is called
 				innerRule.GenerateInlineCode(iteratorName, inlineVarName) +
-				//d"\t" + inlineVarName + " = Mapper.Map<" + genericSourceTypeName + "," + genericDestinationTypeName + ">(" + iteratorName + ");\r\n" +
-				//here the inner rule stops
+
 				"\t" + intermediaryVarName + ".Add(" + inlineVarName + ");\r\n" +
 				"}\r\n" +
 				destinationVar + " = new " + destinationTypename + "(" + intermediaryVarName + ");\r\n";
@@ -90,6 +89,21 @@ namespace NextMap.MappingRules
 			}
 
 			return canMapGenerics;
+		}
+
+		public Dictionary<Type, Type> GetDependantMappings()
+		{
+			IDictionaryRule innerDictionaryRule = innerRule as IDictionaryRule;
+			if (innerDictionaryRule != null)
+			{
+				Dictionary<Type,Type> dict = new Dictionary<Type, Type>();
+				dict.Add(innerDictionaryRule.SourceType, innerDictionaryRule.DestinationType);
+				return dict;
+			}
+			else
+			{
+				return innerRule.GetDependantMappings();
+			}
 		}
 	}
 }

@@ -1,0 +1,18 @@
+08.05.2011 Version 0.01
+First Release version. All basic functionality implemented and tested.
+Features:
+- for primitive types the types must be convertible.
+- basic collection from System.Collections.Generic can be mapped to and from.
+- arrays of same type will be just copied to destination
+- string type members are converted without problems.
+- any type of Enum will be mapped to any type of Enum.
+- structures will be mapped if are the same type. For different types a mapping will have to be defined.
+- for custom mappings only the top-level members can be set as source member.
+- AssertConfigurationIsValid method to check that all destination members have a mapping rule and that all related configurations are defined.
+- Unit Tests for code quality.
+
+Not supported:
+- mapping from decimal to any other type.
+- mapping members of type Dictionary
+- mapping arrays of one type to another.
+- mapping internal types.

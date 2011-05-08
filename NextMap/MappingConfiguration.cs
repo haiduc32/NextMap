@@ -115,15 +115,19 @@ namespace NextMap
 		{
 			//now this method is tricky since in the future there might be more way relations are 
 			//formed with other configurations and this method will have to be updated accordingly.
-			foreach (MemberMap map in mappingDict.Values.Where(x => x.MappingRule is IRelatedConfigRule))
+			foreach (MemberMap map in mappingDict.Values)
 			{
-				IRelatedConfigRule rule = (IRelatedConfigRule)map.MappingRule;
-				if (!Mapper.IsConfigurationDefined(rule.MapSourceType, rule.MapDestinationType))
+				//IRelatedConfigRule rule = (IRelatedConfigRule)map.MappingRule;
+				//TODO: we need to iterate thru the dictionary here!
+				foreach (KeyValuePair<Type, Type> typePair in map.MappingRule.GetDependantMappings())
 				{
-					throw new MappingException(string.Format("For {0} to {1} configuration mapping to the destination" +
-						"member {2} reolies on having a configuration defined from {3} to {4} that was not found.",
-						sourceType.GetCSharpName(), destinationType.GetCSharpName(), map.DestinationMemberName,
-						rule.MapDestinationType.GetCSharpName(), rule.MapDestinationType.GetCSharpName()));	
+					if (!Mapper.IsConfigurationDefined(typePair.Key, typePair.Value))
+					{
+						throw new MappingException(string.Format("For {0} to {1} configuration mapping to the destination " +
+							"member {2} relies on having a configuration defined from {3} to {4} that was not found.",
+							sourceType.GetCSharpName(), destinationType.GetCSharpName(), map.DestinationMemberName,
+							typePair.Key.GetCSharpName(), typePair.Value.GetCSharpName()));
+					}
 				}
 			}
 		}
@@ -169,8 +173,9 @@ namespace NextMap
 					MemberMap memberMap;
 					if (!TryConfigureMemberMapping(sourceMember, destinationMember, out memberMap))
 					{
-						throw new MappingException(string.Format("No mapping could be defined for member {0} from {1} to {2}.",
-							destinationMember, destinationType.GetCSharpName(), sourceType.GetCSharpName()));
+						//probably exceptions should be thrown by AssignConfigurationIsValid() method instead
+						//throw new MappingException(string.Format("No mapping could be defined for member {0} from {1} to {2}.",
+						//    destinationMember, destinationType.GetCSharpName(), sourceType.GetCSharpName()));
 					}
 
 					mappingDict[memberMap.DestinationMemberName] = memberMap;

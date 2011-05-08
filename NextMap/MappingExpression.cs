@@ -58,6 +58,10 @@ namespace NextMap
 			return new MappingExpression<TSource, TDestination>(mappingConfiguration);
 		}
 
+		/// <summary>
+		/// Clears all previous mapping rules for this types. Will not clear them if the configuration was defined
+		/// previously.
+		/// </summary>
 		public IMappingExpression<TSource, TDestination> ResetConfiguration()
 		{
 			mappingConfiguration.ResetConfiguration();

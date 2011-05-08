@@ -11,7 +11,7 @@ namespace NextMap.MappingRules
 	/// an exception at runtime when mapping if the mapping was not defined. In a rule chain check should be used
 	/// as the last resort.
 	/// </summary>
-	class MapClassRule : IMemberMappingRule
+	class MapClassRule : IMemberMappingRule, IDictionaryRule
 	{
 		public Type SourceType { get; private set; }
 		public Type DestinationType { get; private set; }
@@ -38,6 +38,11 @@ namespace NextMap.MappingRules
 			}
 
 			return false;
+		}
+
+		public Dictionary<Type, Type> GetDependantMappings()
+		{
+			return new Dictionary<Type, Type>();
 		}
 	}
 }
