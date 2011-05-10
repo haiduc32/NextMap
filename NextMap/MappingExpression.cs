@@ -96,10 +96,16 @@ namespace NextMap
 			mappingConfiguration.MapFrom(destinationMemberInfo.Name, sourceMemberInfo.Name, sourceMemberInfo);
 		}
 
-		public void Ignore()
+		/// <summary>
+		/// Ignores the destination member from the mapping configuration.
+		/// </summary>
+		/// <param name="ignoreOnCopy">Is only valid for members that have been configured for mapping by a
+		/// previous rule or by convention. Will map the source member to destination in case of true when
+		/// the mapping is done as a copy from source to destination.</param>
+		public void Ignore(bool ignoreOnMap = true)
 		{
 			//mappingConfiguration.a = "c";
-			mappingConfiguration.Ignore(destinationMemberInfo.Name);
+			mappingConfiguration.Ignore(destinationMemberInfo.Name, ignoreOnMap);
 		}
 
 		#endregion IMemberConfigurationExpression<TSource> implementation

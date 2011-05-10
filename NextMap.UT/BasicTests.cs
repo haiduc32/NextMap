@@ -34,9 +34,6 @@ namespace NextMap.UT
 		[TestMethod]
 		public void Basic_Mapping_Test()
 		{
-			CountryEnum b = CountryEnum.Australia;
-			CountryEnumDto a = (CountryEnumDto)b;
-
 			Mapper.CreateMap<Customer, CustomerDto>()
 				.ForMember(x => x.Years, x => x.MapFrom(y => y.Age))
 				.ForMember(x => x.Surname, x => x.MapFrom(y => y.LastName));
@@ -60,6 +57,46 @@ namespace NextMap.UT
 			Assert.AreNotEqual(customer.Name, customerDto.Name);
 		}
 
+		/// <summary>
+		/// Setup an Ignore for a member with ignoreOnCopy to false.
+		/// Expect the copy mapping to not ignore the member.
+		/// </summary>
+		[TestMethod]
+		public void Ignore_Copy_Member_Teset()
+		{
+			Mapper.CreateMap<Customer, CustomerDto>().ForMember(x => x.Name, x => x.Ignore(false));
+
+			Customer customer = GenerateCustomer();
+
+			CustomerDto customerDto = new CustomerDto { Name = "OldName" };
+			Mapper.Map(customer, customerDto);
+
+			CustomerDto newCustomerDto = Mapper.Map<Customer, CustomerDto>(customer);
+
+			Assert.AreEqual(customer.Name, customerDto.Name);
+			Assert.AreNotEqual(customer.Name, newCustomerDto.Name);
+		}
+
+		/// <summary>
+		/// Setup an Ignore for a member with ignoreOnCopy to false.
+		/// Expect the copy mapping to not ignore the member.
+		/// </summary>
+		[TestMethod]
+		public void Ignore_Attribute_Copy_Member_Teset()
+		{
+			Mapper.CreateMap<Customer, CustomerDtoWithAttributes>();
+
+			Customer customer = GenerateCustomer();
+
+			CustomerDtoWithAttributes customerDto = new CustomerDtoWithAttributes { Name = "OldName" };
+			Mapper.Map(customer, customerDto);
+
+			CustomerDtoWithAttributes newCustomerDto = Mapper.Map<Customer, CustomerDtoWithAttributes>(customer);
+
+			Assert.AreEqual(customer.Name, customerDto.Name);
+			Assert.AreNotEqual(customer.Name, newCustomerDto.Name);
+		}
+
 		[TestMethod]
 		[ExpectedException(typeof(MappingException))]
 		public void Check_First_Level_Member_Test()
@@ -79,6 +116,35 @@ namespace NextMap.UT
 			Assert.IsNull(customerDto);
 		}
 
+		/// <summary>
+		/// Define a mapping configuration for customer excluding the Name and Surname.
+		/// Map an instance of Customer to an instance of CustomerDto.
+		/// Expect that Name and Surname on the instance of CustomerDto did not change. Expect the rest of the 
+		/// fields are updated.
+		/// </summary>
+		[TestMethod]
+		public void Basic_Copy_Map()
+		{
+			Mapper.CreateMap<Customer, CustomerDto>()
+				.ForMember(x => x.Years, x => x.MapFrom(y => y.Age))
+				.ForMember(x => x.Surname, x => x.Ignore())
+				.ForMember(x => x.Name, x => x.Ignore());
+
+			Customer customer = GenerateCustomer();
+			CustomerDto customerDto = GenerateCustomerDto();
+
+			CustomerDto resultCustomer = Mapper.Map(customer, customerDto);
+
+			//the result customer must be the same instance as the one supplied as param to destination.
+			Assert.AreSame(customerDto, resultCustomer);
+
+			Assert.AreEqual(customer.Age, customerDto.Years);
+			Assert.AreEqual(customer.Height, customerDto.Height);
+			Assert.AreNotEqual(customer.Name, customerDto.Name);
+			Assert.AreNotEqual(customer.LastName, customerDto.Surname);
+
+		}
+
 		#endregion test methods
 
 		#region helper methods
@@ -92,6 +158,20 @@ namespace NextMap.UT
 				LastName = "Doe",
 				Name = "Jon",
 				Weight = 75
+			};
+
+			return customer;
+		}
+
+		private CustomerDto GenerateCustomerDto()
+		{
+			CustomerDto customer = new CustomerDto
+			{
+				Years = 23,
+				Height = 175,
+				Surname = "Snow",
+				Name = "Mark",
+				Weight = 85
 			};
 
 			return customer;

@@ -69,25 +69,21 @@ namespace NextMap
 		/// </summary>
 		public static TDestination Map<TSource, TDestination>(TSource source)
 		{
-			//TODO: optimize, try to bypass the lock when possible
-			lock (lockObject)
-			{
-				//fist must check the list of outstanding mapping configurations for compiling
-				if (outstandingConfigurations.Count > 0)
-				{
-					CompileOutstandingConfigurations();
-				}
-			}
-
-			IMap mapper;
-
-			if (!mapDictionary.TryGetValue(new MapKey(typeof(TSource), typeof(TDestination)), out mapper))
-			{
-				throw new MappingException(string.Format("A mapping configuration has not been defined from {0} to {1}.", 
-					typeof(TSource).GetCSharpName(), typeof(TDestination).GetCSharpName()));
-			}
+			IMap mapper = GetMapper<TSource, TDestination>();
 
 			object mappedObject = mapper.Map(source);
+			return (TDestination)mappedObject;
+		}
+
+		/// <summary>
+		/// Copies the values from source to destination mapping fields based on a previously defiend mapping
+		/// configuration.
+		/// </summary>
+		public static TDestination Map<TSource, TDestination>(TSource source, TDestination destination)
+		{
+			IMap mapper = GetMapper<TSource, TDestination>();
+
+			object mappedObject = mapper.Map(source, destination);
 			return (TDestination)mappedObject;
 		}
 
@@ -146,6 +142,28 @@ namespace NextMap
 		#endregion public methods
 
 		#region private methods
+
+		private static IMap GetMapper<TSource, TDestination>()
+		{
+			//TODO: optimize, try to bypass the lock when possible
+			lock (lockObject)
+			{
+				//fist must check the list of outstanding mapping configurations for compiling
+				if (outstandingConfigurations.Count > 0)
+				{
+					CompileOutstandingConfigurations();
+				}
+			}
+
+			IMap mapper;
+
+			if (!mapDictionary.TryGetValue(new MapKey(typeof(TSource), typeof(TDestination)), out mapper))
+			{
+				throw new MappingException(string.Format("A mapping configuration has not been defined from {0} to {1}.",
+					typeof(TSource).GetCSharpName(), typeof(TDestination).GetCSharpName()));
+			}
+			return mapper;
+		}
 
 		private static void CompileOutstandingConfigurations()
 		{

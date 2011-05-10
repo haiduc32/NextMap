@@ -14,6 +14,7 @@ namespace NextMap
 		public string SourceMemberName { get; set; }
 
 		public bool Ignore { get; set; }
+		public bool IgnoreOnCopy { get; set; }
 
 		public MemberMapType MapType { get; set; }
 

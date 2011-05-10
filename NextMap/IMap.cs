@@ -8,5 +8,6 @@ namespace NextMap
 	public interface IMap
 	{
 		object Map(object source);
+		object Map(object source, object destination);
 	}
 }

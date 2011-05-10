@@ -10,6 +10,6 @@ namespace NextMap
 	{
 		void MapFrom<TMember>(Expression<Func<TSource, TMember>> sourceMember);
 
-		void Ignore();
+		void Ignore(bool ignoreOnCopy = true);
 	}
 }

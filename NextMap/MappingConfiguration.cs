@@ -9,6 +9,11 @@ using NextMap.Extensions;
 
 namespace NextMap
 {
+	/// <summary>
+	/// class for working with mapping configurations.
+	/// </summary>
+	/// <typeparam name="TSource">The source type from where the mapping is done.</typeparam>
+	/// <typeparam name="TDestination">The destination type to be mapped to.</typeparam>
 	internal class MappingConfiguration<TSource, TDestination> : IMappingConfiguration
 	{
 		#region private fields
@@ -73,15 +78,35 @@ namespace NextMap
 			mappingDict[memberMap.DestinationMemberName] = memberMap;
 		}
 
-		public void Ignore(string memberName)
+		/// <summary>
+		/// Ignores the destination member from the mapping configuration.
+		/// </summary>
+		/// <param name="memberName">The name of the destination member.</param>
+		/// <param name="ignoreOnCopy">Is only valid for members that have been configured for mapping by a
+		/// previous rule or by convention. Will map the source member to destination in case of true when
+		/// the mapping is done as a copy from source to destination.</param>
+		public void Ignore(string memberName, bool ignoreOnCopy = true)
 		{
-			MemberMap memberMap = new MemberMap
-			{
-				DestinationMemberName = memberName,
-				Ignore = true
-			};
+			//this method can only be called after mapping by convention has been configured
+			//and so the mappingDict is populated already with MemberMap configurations for members
+			//that could be mapped
 
-			mappingDict[memberMap.DestinationMemberName] = memberMap;
+			MemberMap memberMap;
+			if (mappingDict.TryGetValue(memberName, out memberMap))
+			{
+				memberMap.Ignore = true;
+				memberMap.IgnoreOnCopy = ignoreOnCopy;
+			}
+			else
+			{
+				memberMap = new MemberMap
+				{
+					DestinationMemberName = memberName,
+					Ignore = true,
+					IgnoreOnCopy = true
+				};
+				mappingDict[memberName] = memberMap;
+			}
 		}
 
 		public void ResetConfiguration()
@@ -189,6 +214,7 @@ namespace NextMap
 			memberMap = new MemberMap
 			{
 				Ignore = false,
+				IgnoreOnCopy = false,
 				DestinationMemberName = destinationMember.Name,
 				SourceMemberName = sourceMember.Name
 			};
@@ -196,6 +222,22 @@ namespace NextMap
 			Type sourceType = GetMemberType(sourceMember);
 			Type destinationType = GetMemberType(destinationMember);
 
+			//check if there is an ignore attribute set on the destionation member
+			object[] destinationAttributes = destinationMember.GetCustomAttributes(true);
+			IgnoreMapAttribute ignoreAttribute = destinationAttributes
+				.SingleOrDefault(x => x is IgnoreMapAttribute) as IgnoreMapAttribute;
+			if (ignoreAttribute != null)
+			{
+				memberMap.Ignore = true;
+
+				//if IgnoreOnCopy is set to true, there is no reason for continuing to rule finding
+				if (memberMap.IgnoreOnCopy = ignoreAttribute.IgnoreOnCopy)
+				{
+					return false;
+				}
+			}
+
+			//if member is not ignored at least for copy find a mapping rule
 			IMemberMappingRule mappingRule;
 
 			//if a mapping could be defined return true
@@ -213,6 +255,9 @@ namespace NextMap
 			}
 		}
 
+		/// <summary>
+		/// Gets the destination members with no configuration defined for them.
+		/// </summary>
 		private IEnumerable<MemberInfo> GetUnmatchedDestinationMembers()
 		{
 			return fieldInfoDict.Where(x => !mappingDict.ContainsKey(x.Key)).Select(x => x.Value);

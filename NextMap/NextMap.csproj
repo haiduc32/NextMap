@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\TypeExtensions.cs" />
+    <Compile Include="IgnoreMapAttribute.cs" />
     <Compile Include="MappingRules\IDictionaryRule.cs" />
     <Compile Include="MappingRules\IMemberMappingRule.cs" />
     <Compile Include="MapKey.cs" />

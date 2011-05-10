@@ -54,6 +54,7 @@
     <Compile Include="TestClasses\CountryEnumDto.cs" />
     <Compile Include="TestClasses\Customer.cs" />
     <Compile Include="TestClasses\CustomerDto.cs" />
+    <Compile Include="TestClasses\CustomerDtoWithAttributes.cs" />
     <Compile Include="TestClasses\Product.cs" />
     <Compile Include="TestClasses\ProductDto.cs" />
     <Compile Include="TestClasses\ShoppingCart.cs" />

@@ -94,19 +94,29 @@ using NextMap;
 			string sourceTypeName = configuration.SourceType.Name;
 
 			string sourceCast = configuration.SourceType.Name + " sourceObject = (" + configuration.SourceType.Name + ")source;\r\n";
+			string destinationCast = configuration.DestinationType.Name + " targetObject = (" + configuration.DestinationType.Name + ")destination;\r\n";
 			string targetCreate = configuration.DestinationType.Name + " targetObject = new " + configuration.DestinationType.Name + "();\r\n";
 
 			int classIndex = Interlocked.Increment(ref classCounter);
 			fullName = string.Format("DynamicCode{0}.DynamicCodeMap{0}", classIndex);
 
 			string mappingLines = string.Empty;
+			string copyMappingLines = string.Empty;
 			foreach (KeyValuePair<string, MemberMap> pair in configuration.Mappings)
 			{
 				MemberMap memberMap = pair.Value;
 
-				if (memberMap == null || memberMap.Ignore) continue;
+				if (memberMap == null) continue;
 
-				mappingLines += memberMap.GenerateCode("sourceObject", "targetObject") + "\r\n";
+				if (!memberMap.Ignore)
+				{
+					mappingLines += memberMap.GenerateCode("sourceObject", "targetObject") + "\r\n";
+				}
+
+				if (!memberMap.IgnoreOnCopy)
+				{
+					copyMappingLines += memberMap.GenerateCode("sourceObject", "targetObject") + "\r\n";
+				}
 				// string.Format(FIELD_MAP, memberMap.MemberName, memberMap.SourceMemberName);
 			}
 
@@ -130,7 +140,16 @@ using NextMap;
 			" + targetCreate + @"
 			" + mappingLines + @"
 			return targetObject;
-		} 
+		}
+
+		public object Map(object source, object destination)
+		{
+			if (source == null || destination == null) return null;
+			" + sourceCast + @"
+			" + destinationCast + @"
+			" + copyMappingLines + @"
+			return targetObject;
+		}
 	}
 }";
 			return code;
