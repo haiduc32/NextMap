@@ -9,6 +9,9 @@ using NextMap.Extensions;
 
 namespace NextMap
 {
+	/// <summary>
+	/// NextMap Mapper.
+	/// </summary>
 	public static class Mapper
 	{
 		#region private fields

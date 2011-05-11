@@ -7,6 +7,9 @@ using System.Reflection;
 
 namespace NextMap
 {
+	/// <summary>
+	/// IMappingExpression interface implementation.
+	/// </summary>
 	internal class MappingExpression<TSource,TDestination> : IMappingExpression<TSource,TDestination>,
 		IMemberConfigurationExpression<TSource>
 	{
@@ -35,11 +38,11 @@ namespace NextMap
 		#region IMappingExpression<TSource,TDestination> implementation
 
 		/// <summary>
-		/// 
+		/// Expression for selecting a mapping rule for a destination member.
 		/// </summary>
 		/// <param name="destinationMember">The top level member from the destination type.</param>
-		/// <param name="memberOptions"></param>
-		/// <returns></returns>
+		/// <param name="memberOptions">Configuration options for the member.</param>
+		/// <returns>A mapping expression that can be used for applying more mapping rules.</returns>
 		public IMappingExpression<TSource, TDestination> ForMember(Expression<Func<TDestination, object>> destinationMember,
 			Action<IMemberConfigurationExpression<TSource>> memberOptions)
 		{
@@ -74,9 +77,8 @@ namespace NextMap
 		#region IMemberConfigurationExpression<TSource> implementation
 
 		/// <summary>
-		/// 
+		/// Sets the mapping source for a destination member.
 		/// </summary>
-		/// <typeparam name="TMember"></typeparam>
 		/// <param name="sourceMember">The top level member from the source type.</param>
 		public void MapFrom<TMember>(Expression<Func<TSource, TMember>> sourceMember)
 		{
